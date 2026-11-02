@@ -28,3 +28,13 @@ cd superagent_learn
 ```
 
 Contributions are welcome: open an Issue or a Pull Request.
+
+## 2048 Game
+
+A web version of the classic 2048 game lives in [`2048/index.html`](2048/index.html).
+Open that file in any browser to play — no build step or server needed.
+
+- Move tiles with the arrow keys (WASD also works, plus touch swipes on mobile)
+- Tiles with the same number merge into one when they collide
+- Reach **2048** to win, then keep playing for a higher score
+- Score and best score (saved locally) are shown at the top; start over any time with “新游戏”
