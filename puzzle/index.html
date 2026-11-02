@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>拼图小游戏</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>拼图小游戏</h1>
+    <p class="subtitle">选择一张图片和难度，把打乱的碎片拼回原图！</p>
+  </header>
+
+  <main>
+    <section id="setup">
+      <h2>1. 选择图片</h2>
+      <div id="gallery" class="gallery" aria-label="图片选择"></div>
+
+      <h2>2. 选择难度</h2>
+      <div class="difficulty">
+        <button class="diff-btn" data-pieces="100">简单 · 100 块</button>
+        <button class="diff-btn" data-pieces="200">困难 · 200 块</button>
+      </div>
+
+      <button id="start-btn" class="primary">开始游戏</button>
+    </section>
+
+    <section id="game" hidden>
+      <div class="hud">
+        <span id="timer">00:00</span>
+        <span id="moves">步数：0</span>
+        <span id="progress">已完成：0%</span>
+        <button id="preview-btn" class="ghost">查看原图</button>
+        <button id="restart-btn" class="ghost">重新打乱</button>
+        <button id="quit-btn" class="ghost">退出</button>
+      </div>
+      <div id="board" class="board" aria-label="拼图区域"></div>
+      <div id="preview-overlay" class="preview-overlay" hidden>
+        <canvas id="preview-canvas"></canvas>
+      </div>
+    </section>
+
+    <div id="win-overlay" class="win-overlay" hidden>
+      <div class="win-card">
+        <h2>🎉 拼图完成！</h2>
+        <p id="win-stats"></p>
+        <button id="win-close" class="primary">再来一局</button>
+      </div>
+    </div>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
