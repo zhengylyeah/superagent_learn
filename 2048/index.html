@@ -107,6 +107,14 @@
   .overlay.win h2 { color: #edc22e; }
   .overlay p { font-size: 18px; margin-bottom: 18px; }
   footer { margin-top: 14px; font-size: 13px; color: #a4988a; text-align: center; }
+  #confetti-canvas {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 99;
+  }
 </style>
 </head>
 <body>
@@ -131,6 +139,7 @@
   </div>
   <footer>合并到 <b>2048</b> 即获胜，还能继续挑战更高分！</footer>
 </div>
+<canvas id="confetti-canvas"></canvas>
 <script>
 (function () {
   "use strict";
@@ -154,6 +163,91 @@
   var won = false;
   var over = false;
   var animating = false;
+
+  // ----- Confetti effect (fires once per game when 2048 is reached) -----
+  var confettiCanvas = document.getElementById("confetti-canvas");
+  var ctx = confettiCanvas.getContext("2d");
+  var confettiParticles = [];
+  var confettiRunning = false;
+  var CONFETTI_COLORS = ["#edc22e", "#f65e3b", "#f2b179", "#edcf72", "#776e65", "#f9f6f2", "#8f7a66"];
+
+  function confettiResize() {
+    confettiCanvas.width = window.innerWidth;
+    confettiCanvas.height = window.innerHeight;
+  }
+  confettiResize();
+  window.addEventListener("resize", confettiResize);
+
+  function spawnConfettiBurst(x, y, count, angleBase, spread) {
+    for (var i = 0; i < count; i++) {
+      var isEmoji = Math.random() < 0.12;
+      var angle = angleBase + (Math.random() - 0.5) * spread;
+      var speed = 9 + Math.random() * 8;
+      confettiParticles.push({
+        x: x, y: y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        size: isEmoji ? 16 + Math.random() * 10 : 5 + Math.random() * 5,
+        color: CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
+        emoji: isEmoji ? (Math.random() < 0.5 ? "🎉" : "✨") : null,
+        rot: Math.random() * Math.PI * 2,
+        vr: (Math.random() - 0.5) * 0.3,
+        life: 0,
+        maxLife: 140 + Math.random() * 60
+      });
+    }
+  }
+
+  function launchConfetti() {
+    var w = confettiCanvas.width, h = confettiCanvas.height;
+    spawnConfettiBurst(w * 0.5, h * 0.45, 60, -Math.PI / 2, Math.PI * 1.2);
+    spawnConfettiBurst(w * 0.12, h * 0.85, 40, -Math.PI / 3, Math.PI / 3);
+    spawnConfettiBurst(w * 0.88, h * 0.85, 40, -Math.PI * 2 / 3, Math.PI / 3);
+    if (!confettiRunning) {
+      confettiRunning = true;
+      requestAnimationFrame(confettiFrame);
+    }
+  }
+
+  function confettiFrame() {
+    ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+    for (var i = confettiParticles.length - 1; i >= 0; i--) {
+      var p = confettiParticles[i];
+      p.life++;
+      p.vy += 0.18;            // gravity
+      p.vx *= 0.99;            // air drag
+      p.vy *= 0.995;
+      p.x += p.vx;
+      p.y += p.vy;
+      p.rot += p.vr;
+      var fade = 1 - Math.max(0, (p.life - p.maxLife * 0.7) / (p.maxLife * 0.3));
+      if (p.life >= p.maxLife || p.y > confettiCanvas.height + 40) {
+        confettiParticles.splice(i, 1);
+        continue;
+      }
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, fade);
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot);
+      if (p.emoji) {
+        ctx.font = p.size + "px sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(p.emoji, 0, 0);
+      } else {
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2);
+      }
+      ctx.restore();
+    }
+    if (confettiParticles.length) {
+      requestAnimationFrame(confettiFrame);
+    } else {
+      confettiRunning = false;
+      ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+    }
+  }
+  // ----- End confetti -----
 
   // Create the static background cells.
   for (var r = 0; r < SIZE; r++) {
@@ -225,6 +319,7 @@
     setScore(0);
     won = false;
     over = false;
+    confettiParticles = [];
     hideOverlay();
     addRandomTile();
     addRandomTile();
@@ -293,7 +388,10 @@
           grid[next.row][next.col] = merged;
           mergedThisMove.push(merged.id);
           gained += merged.value;
-          if (merged.value === 2048 && !won) won = true;
+          if (merged.value === 2048 && !won) {
+            won = true;
+            launchConfetti();
+          }
           moved = true;
         } else if (result.farthest.r !== tile.row || result.farthest.c !== tile.col) {
           grid[tile.row][tile.col] = null;
